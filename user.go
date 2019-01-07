@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 	"net/http"
+	"io/ioutil"
 	"encoding/json"
 )
 
@@ -75,7 +78,20 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 		r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", access_token))
 
 		resp, err := client.Do(r)
-		// TODO: check to see if token has expired, and if so, get a new token
+		if resp.StatusCode == 429{ // rate limited
+			fmt.Println("Request was rate limited, retry after " + resp.Header["Retry-After"][0] + " seconds")
+			waittime, _ := strconv.Atoi(resp.Header["Retry-After"][0])
+			time.Sleep(time.Duration(waittime) * time.Second)
+			continue
+		} else if resp.StatusCode != 200{
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			bodyString := string(bodyBytes)
+			panic(fmt.Sprintf("Error while getting user songs: %s", bodyString))
+			break
+
+		} else if err != nil{
+			panic(fmt.Sprintf("Error while getting user songs: %s", err))
+		}
 
 		var respVal TrackResponse
 		err = json.NewDecoder(resp.Body).Decode(&respVal)
@@ -88,13 +104,6 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 		songs = append(songs, respVal.Items...)
 	}
 
-	// for i, song := range songs{
-	// 	// song := song.(map[string]interface{})//map[string]string)
-	// 	// track := song["track"].(map[string]interface{})//["name"]
-	// 	// name := track["name"].(string)
-	// 	fmt.Println(i)
-	// 	fmt.Println(song)//["track"]["name"])
-	// }
 	return songs
 }
 

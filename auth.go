@@ -45,7 +45,7 @@ func getTokens(code, redirect_uri string, refresh bool) (string, string, error){
 	resp, err := client.Do(r)
 
 	// if an error occurred, redirect to error page
-	if resp.StatusCode  != 200{
+	if resp.StatusCode != 200{
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
 		panic(fmt.Sprintf("Error while fetching tokens: %s", bodyString))
