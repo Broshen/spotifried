@@ -106,7 +106,7 @@ func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Sprintf("Error getting access tokens:", err))
 	}
 
-	user := getOrCreateUser(access_token, refresh_token)
+	user := getUser(access_token, refresh_token)
 	// if it's the initial user request - i.e. there is no "other user",
 	// log the user into the db and return it as a JSON object
 	if other_user_id == "" {

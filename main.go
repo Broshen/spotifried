@@ -52,6 +52,7 @@ func main() {
 	r.HandleFunc("/error", errorHandler)
 	r.HandleFunc("/authenticate", authHandler)
 	r.HandleFunc("/authenticated", authenticatedHandler)
+	r.HandleFunc("/profile/{user_id}", analyzeHandler)
 	r.HandleFunc("/share/{user_id}", shareHandler)
 	r.HandleFunc("/compare/{user1_id}/{user2_id}", compareHandler)
 	http.Handle("/", r)

@@ -18,11 +18,13 @@ TODO:
 
 -analyze playlists
 
--analyze artists
+~~analyze artists~~
 
-	- get genres of all artists
+	- ~~get genres of all artists~~
 
 -analyze trends over time
+
+-analyze TOP (not ALL) tracks/artists - /top endpoint
 
 -caching - add an intermediate caching layer so that we don't always SPAM spotify with requests
 
