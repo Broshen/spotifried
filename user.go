@@ -41,7 +41,17 @@ func getOrCreateUser(access_token, refresh_token string) User{
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", access_token))
 
 	client := &http.Client{}
-	resp, _ := client.Do(r)
+	resp, err := client.Do(r)
+
+	if resp.StatusCode != 200{
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		bodyString := string(bodyBytes)
+		panic(fmt.Sprintf("Error while getting user songs: %s", bodyString))
+		break
+	} else if err != nil{
+		panic(fmt.Sprintf("Error while getting user songs: %s", err))
+	}
+
 	var respVal map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&respVal)
 
@@ -88,7 +98,6 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 			bodyString := string(bodyBytes)
 			panic(fmt.Sprintf("Error while getting user songs: %s", bodyString))
 			break
-
 		} else if err != nil{
 			panic(fmt.Sprintf("Error while getting user songs: %s", err))
 		}
