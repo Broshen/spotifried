@@ -33,21 +33,30 @@ func getSongIntersection(user_1_songs, user_2_songs []Song) []Song{
 }
 
 func analyzeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	vars := mux.Vars(r)
 	user_id := vars["user_id"]
-
-	redirect_uri := "http://" + r.Host+"/authenticated"
-
 	user := getUserById(user_id)
 
-	user.AccessToken, user.RefreshToken, _ = getTokens(user.RefreshToken, redirect_uri, true)
-	defer db.Save(&user)
+	var artists []Artist
+	var genres []Genre
 
-	user_songs := getAllUserSongs(user.AccessToken, user.RefreshToken)
-	artists, genres := getAllUserArtistsAndGenres(user.AccessToken, user.RefreshToken, user_songs)
+	err := json.Unmarshal([]byte(user.Artists), &artists)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	err = json.Unmarshal([]byte(user.Genres), &genres)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	response := map[string]interface{}{}
 	response["artists"] = artists
 	response["genres"] = genres
+
 	json.NewEncoder(w).Encode(response)
 }

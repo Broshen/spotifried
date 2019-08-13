@@ -19,18 +19,23 @@ func compareHandler(w http.ResponseWriter, r *http.Request) {
 	user1_id := vars["user1_id"]
 	user2_id := vars["user2_id"]
 
-	redirect_uri := "http://" + r.Host+"/authenticated"
-
 	user1 := getUserById(user1_id)
 	user2 := getUserById(user2_id)
 
-	user1.AccessToken, user1.RefreshToken, _ = getTokens(user1.RefreshToken, redirect_uri, true)
-	user2.AccessToken, user2.RefreshToken, _ = getTokens(user2.RefreshToken, redirect_uri, true)
-	defer db.Save(&user1)
-	defer db.Save(&user2)
+	var user1_songs, user2_songs []Song
 
-	user1_songs := getAllUserSongs(user1.AccessToken, user1.RefreshToken)
-	user2_songs := getAllUserSongs(user2.AccessToken, user2.RefreshToken)
+	err := json.Unmarshal([]byte(user1.Songs), &user1_songs)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	err = json.Unmarshal([]byte(user2.Songs), &user2_songs)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	songs := getSongIntersection(user1_songs, user2_songs)
 

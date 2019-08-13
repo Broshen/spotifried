@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/gorilla/mux"
 )
 
 var client = &http.Client{}
@@ -199,4 +200,46 @@ func getAllUserArtistsAndGenres(access_token, refresh_token string, songs []Song
 		return genres[i].SongCount > genres[j].SongCount
 	})
 	return artists, genres
+}
+
+func fetchHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	user_id := vars["user_id"]
+	user := getUserById(user_id)
+	defer db.Save(&user)
+
+	redirect_uri := "http://" + r.Host+"/authenticated"
+	user.AccessToken, user.RefreshToken, _ = getTokens(user.RefreshToken, redirect_uri, true)
+	user_songs := getAllUserSongs(user.AccessToken, user.RefreshToken)
+	artists, genres := getAllUserArtistsAndGenres(user.AccessToken, user.RefreshToken, user_songs)
+
+	songsByteArr, err := json.Marshal(user_songs)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	artistsByteArr, err := json.Marshal(artists)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	genresByteArr, err := json.Marshal(genres)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	user.Songs = string(songsByteArr)
+	user.Artists = string(artistsByteArr)
+	user.Genres = string(genresByteArr)
+	user.LastRefreshed = string(time.Now().Format("01-02-2006 15:04:05"))
+
+	response := map[string]interface{}{}
+	response["songs"] = user_songs
+	response["artists"] = artists
+	response["genres"] = genres
+	json.NewEncoder(w).Encode(response)
 }

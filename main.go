@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"html/template"
 	"github.com/jinzhu/gorm"
     _ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/gorilla/mux"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there")
+	response := map[string]interface{}{}
+	fmt.Println("request", r)
+	tmpl := template.Must(template.ParseFiles("./frontend/build/index.html"))
+	tmpl.Execute(w, response)
 }
 
 func errorHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	fmt.Fprintf(w, "Aw fuck shit an error occured. Fuck me in the ass goddamnit. Can't even get one thing right today...")
 }
 
@@ -44,17 +49,32 @@ func main() {
 		DisplayName: "sample",
 		AccessToken: "sample",
 		RefreshToken: "sample",
+		LastRefreshed: "",
+		Songs: "",
+		Artists: "",
+		Genres: "",
+
 	}
 	db.AutoMigrate(&sampleUser)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", handler)
-	r.HandleFunc("/error", errorHandler)
-	r.HandleFunc("/authenticate", authHandler)
-	r.HandleFunc("/authenticated", authenticatedHandler)
-	r.HandleFunc("/profile/{user_id}", analyzeHandler)
-	r.HandleFunc("/share/{user_id}", shareHandler)
-	r.HandleFunc("/compare/{user1_id}/{user2_id}", compareHandler)
+
+	api := r.PathPrefix("/api").Subrouter()
+
+	api.HandleFunc("/error", errorHandler)
+	api.HandleFunc("/authenticate", authHandler)
+	api.HandleFunc("/authenticated", authenticatedHandler)
+	api.HandleFunc("/fetch/{user_id}", fetchHandler)
+	api.HandleFunc("/profile/{user_id}", analyzeHandler)
+	api.HandleFunc("/share/{user_id}", shareHandler)
+	api.HandleFunc("/compare/{user1_id}/{user2_id}", compareHandler)
+
+	r.PathPrefix("/static").Handler(http.FileServer(http.Dir("./frontend/build/static")))
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("oh no not found", r.URL.String())
+	    http.ServeFile(w, r, "./frontend/build/index.html")
+	})
+
 	http.Handle("/", r)
 
 	fmt.Println("Online")

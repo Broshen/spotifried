@@ -80,7 +80,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	keys := r.URL.Query()
 	other_user_id := keys.Get("state")
 	
-	redirect_uri := "http://" + r.Host + "/authenticated"
+	redirect_uri := "http://" + r.Host + "/api/authenticated"
 
 	auth_url := fmt.Sprintf(
 		"https://accounts.spotify.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s",
@@ -96,7 +96,7 @@ func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
 	code := keys.Get("code")
 	other_user_id := keys.Get("state")
 
-	base_uri := "http://" + r.Host
+	base_uri := "http://" + r.Host + "/api"
 	redirect_uri := base_uri+"/authenticated"
 
 	// use code to get access tokens
@@ -110,7 +110,8 @@ func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
 	// if it's the initial user request - i.e. there is no "other user",
 	// log the user into the db and return it as a JSON object
 	if other_user_id == "" {
-		json.NewEncoder(w).Encode(user)
+		profile_url := fmt.Sprintf("%s/profile/%s", base_uri, user.ID)
+		http.Redirect(w,r, profile_url, 301)
 	}else{
 	// otherwise, we have two users to compare, redirect to the compare page
 		compare_url := fmt.Sprintf("%s/compare/%s/%s", base_uri, other_user_id, user.ID)
