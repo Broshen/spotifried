@@ -4,23 +4,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"html/template"
 	"github.com/jinzhu/gorm"
     _ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/gorilla/mux"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{}
-	fmt.Println("request", r)
-	tmpl := template.Must(template.ParseFiles("./frontend/build/index.html"))
-	tmpl.Execute(w, response)
-}
-
 func errorHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	fmt.Fprintf(w, "Aw fuck shit an error occured. Fuck me in the ass goddamnit. Can't even get one thing right today...")
 }
+
+// reactScriptsHandlerSystem is an http.FileSystem that serves
+// a react build static files, and lets react-router serve any routes
+// not found
+type reactScriptsHandlerSystem struct {
+	http.FileSystem
+}
+
+// Open is a wrapper around the Open method of the embedded FileSystem
+// that serves a 403 permission error when name has a file or directory
+// with whose name starts with a period in its path.
+func (fs reactScriptsHandlerSystem) Open(name string) (http.File, error) {
+	fmt.Println("open", name)
+	file, err := fs.FileSystem.Open(name)
+
+	// if a file is not found, assume it is a react-router route, and serve the index page
+	if err != nil {
+		fmt.Println("oh no ", name, " created error ", err)
+		index, err := fs.FileSystem.Open("/index.html")
+		if err != nil {
+			fmt.Println("oh no serving index created error ", err)
+			return nil, err
+		}
+		return index, nil
+	}
+	return file, nil
+}
+
 
 func main() {
 
@@ -69,12 +89,7 @@ func main() {
 	api.HandleFunc("/share/{user_id}", shareHandler)
 	api.HandleFunc("/compare/{user1_id}/{user2_id}", compareHandler)
 
-	r.PathPrefix("/static").Handler(http.FileServer(http.Dir("./frontend/build/static")))
-	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("oh no not found", r.URL.String())
-	    http.ServeFile(w, r, "./frontend/build/index.html")
-	})
-
+	r.PathPrefix("/").Handler(http.FileServer(reactScriptsHandlerSystem{http.Dir("./frontend/build/")}))
 	http.Handle("/", r)
 
 	fmt.Println("Online")
