@@ -5,6 +5,10 @@ type User struct{
   DisplayName   string
   AccessToken   string
   RefreshToken  string
+  LastRefreshed string
+  Songs         string
+  Artists       string
+  Genres        string
 }
 
 type TrackResponse struct {
