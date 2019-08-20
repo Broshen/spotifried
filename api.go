@@ -39,7 +39,6 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 	var songs []Song
 
 	for next != "" {
-
 		resp, err := getAPI(access_token, next) 
 		if resp.StatusCode == 429{ // rate limited
 			fmt.Println("Request to get user songs was rate limited, retry after " + resp.Header["Retry-After"][0] + " seconds")
@@ -54,6 +53,11 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 		err = json.NewDecoder(resp.Body).Decode(&respVal)
 		if err != nil {
 			panic(fmt.Sprintf("%s", err))
+		}
+
+		if len(respVal.Items) == 0{
+			fmt.Println("redoing ", next, " got empty resp")
+			continue
 		}
 		next = respVal.Next
 		songs = append(songs, respVal.Items...)

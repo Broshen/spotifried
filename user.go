@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"encoding/json"
-	"fmt"
 )
 
 func getUserById(id string) (*User, error){
@@ -67,7 +66,6 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 	var artists []Artist
 	var genres []Genre
 
-	fmt.Println(user.Artists)
 	err = json.Unmarshal([]byte(user.Artists), &artists)
 	if err != nil {
 	    w.WriteHeader(http.StatusInternalServerError)
