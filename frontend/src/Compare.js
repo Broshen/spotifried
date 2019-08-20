@@ -43,13 +43,13 @@ class Compare extends React.Component {
 
 					<Row className="text-center">
 						<Col xs={12} md={3}>
-							<h4 href={"/profile/" + this.state.data.user1.id}>{this.state.data.user1.name}</h4>
+							<h4><a href={"/profile/" + this.state.data.user1.id}>{this.state.data.user1.name}</a></h4>
 						</Col>
 						<Col xs={12} md={6} >
 							<h5> and </h5>
 						</Col>
 						<Col xs={12} md={3}>
-							<h4>{this.state.data.user2.name}</h4>
+							<h4><a href={"/profile/" + this.state.data.user2.id}>{this.state.data.user2.name}</a></h4>
 						</Col>
 					</Row>
 					<Row>

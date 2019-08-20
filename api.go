@@ -235,20 +235,16 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Save(&user)
 
-	redirect_uri := api_url + "/authenticated"
+	redirect_uri := api_url + "authenticated"
 	user.AccessToken, user.RefreshToken, _ = getTokens(user.RefreshToken, redirect_uri, true)
 	user, err = getAllUserData(user.AccessToken, user.RefreshToken)
-	if err != nil {
-	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
 
-	response := map[string]interface{}{}
-	response["username"] = user.DisplayName
-	response["last_refreshed"] = user.LastRefreshed
-	response["songs"] = user.Songs
-	response["artists"] = user.Artists
-	response["genres"] = user.Genres
-	json.NewEncoder(w).Encode(response)
+	// if current tokens dont work, redirect to reauthenticate
+	if err != nil {
+		fmt.Println("error getting user data", user.DisplayName, err)
+		http.Redirect(w, r, redirect_uri, 301)
+	} else {
+	// otherwise, show profile
+		http.Redirect(w, r, frontend_url + "profile/" + user_id, 301)
+	}
 }

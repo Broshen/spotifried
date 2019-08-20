@@ -79,7 +79,7 @@ class Profile extends React.Component {
 					</Tooltip>
 				}
 				>
-				<Button variant="secondary" href={api_url + "authenticate"}> Reload
+				<Button variant="secondary" href={api_url + "fetch/" + this.props.match.params.id}> Reload
 				</Button>
 				</OverlayTrigger>
 				</Col>

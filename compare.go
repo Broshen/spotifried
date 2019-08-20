@@ -67,7 +67,7 @@ func compareHandler(w http.ResponseWriter, r *http.Request) {
 	artists := getArtistIntersection(user1_artists, user2_artists)
 
 	sort.Slice(songs, func(i, j int) bool {
-		return songs[i].Track.Name < songs[j].Track.Name
+		return songs[i].Track.Artists[0].Name < songs[j].Track.Artists[0].Name
 	})
 	sort.Slice(artists, func(i, j int) bool {
 		return artists[i].Name < artists[j].Name
@@ -83,7 +83,7 @@ func compareHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	response["user2"] = map[string]interface{}{
 		"name": user2.DisplayName,
-		"id": user1.ID,
+		"id": user2.ID,
 		"songcount": len(user2_songs),
 	}
 
