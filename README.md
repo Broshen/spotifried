@@ -1,14 +1,14 @@
 TODO:
 
-~~handle rate limiting for requests~~
+- ~~handle rate limiting for requests~~
 
-~~logging all activity~~
+- ~~logging all activity~~
 
--handling errors gracefully
+- handling errors gracefully
 
-~~configure sensitive info as environment variables & exclude from git~~
+- ~~configure sensitive info as environment variables & exclude from git~~
 
--prettify song comparison response JSON
+- prettify song comparison response JSON
 
 	- show added_at fields for both users
 
@@ -16,16 +16,18 @@ TODO:
 
 	- add fields for both user names
 
--analyze playlists
+- analyze playlists
 
-~~analyze artists~~
+- ~~analyze artists~~
 
-	- ~~get genres of all artists~~
+    - ~~get genres of all artists~~
 
--analyze trends over time
+- analyze trends over time
 
--analyze TOP (not ALL) tracks/artists - /top endpoint
+- analyze TOP (not ALL) tracks/artists - /top endpoint
 
--caching - add an intermediate caching layer so that we don't always SPAM spotify with requests
+- ~~caching - add an intermediate caching layer so that we don't always SPAM spotify with requests~~
 
--add tests
+- add tests
+
+- search functions
