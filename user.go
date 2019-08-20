@@ -4,14 +4,17 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"encoding/json"
+	"fmt"
 )
 
-func getUserById(id string) User{
+func getUserById(id string) (*User, error){
 	user := User{}
 	// TODO: make this error proof
-	db.Where("id = ?", id).First(&user)
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
 
-	return user
+	return &user, nil
 }
 
 func getSongIntersection(user_1_songs, user_2_songs []Song) []Song{
@@ -32,29 +35,55 @@ func getSongIntersection(user_1_songs, user_2_songs []Song) []Song{
 	return intersection
 }
 
+func getArtistIntersection(user1_artists, user2_artists []Artist) []Artist{
+	intersection := []Artist{}
+	user1_set := map[string]bool{}
+
+	for _, artist := range user1_artists{
+		user1_set[artist.Id] = true
+	}
+
+	for _, artist := range user2_artists{
+		_, ok := user1_set[artist.Id]
+		if ok{
+			intersection = append(intersection, artist)
+		}
+	}
+
+	return intersection
+}
+
 func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	vars := mux.Vars(r)
 	user_id := vars["user_id"]
-	user := getUserById(user_id)
+	user, err := getUserById(user_id)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error fetching user " + err.Error()))
+		return
+	}
 
 	var artists []Artist
 	var genres []Genre
 
-	err := json.Unmarshal([]byte(user.Artists), &artists)
+	fmt.Println(user.Artists)
+	err = json.Unmarshal([]byte(user.Artists), &artists)
 	if err != nil {
 	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte("Error fetching user artists " + err.Error()))
 		return
 	}
 	err = json.Unmarshal([]byte(user.Genres), &genres)
 	if err != nil {
 	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte("Error fetching user genres " + err.Error()))
 		return
 	}
 
 	response := map[string]interface{}{}
+	response["username"] = user.DisplayName
+	response["last_refreshed"] = user.LastRefreshed
 	response["artists"] = artists
 	response["genres"] = genres
 

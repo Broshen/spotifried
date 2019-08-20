@@ -80,12 +80,10 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	keys := r.URL.Query()
 	other_user_id := keys.Get("state")
 	
-	redirect_uri := "http://" + r.Host + "/api/authenticated"
-
 	auth_url := fmt.Sprintf(
 		"https://accounts.spotify.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s",
 		client_id,
-		redirect_uri,
+		api_url + "authenticated",
 		scopes,
 		other_user_id)
 	http.Redirect(w, r, auth_url, 301)
@@ -96,25 +94,25 @@ func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
 	code := keys.Get("code")
 	other_user_id := keys.Get("state")
 
-	base_uri := "http://" + r.Host + "/api"
-	redirect_uri := base_uri+"/authenticated"
-
 	// use code to get access tokens
-	access_token, refresh_token, err := getTokens(code, redirect_uri, false)
-
+	access_token, refresh_token, err := getTokens(code, api_url+"authenticated", false)
 	if err != nil{
 		panic(fmt.Sprintf("Error getting access tokens:", err))
 	}
 
-	user := getUser(access_token, refresh_token)
+	user, err := getAllUserData(access_token, refresh_token)
+	if err != nil{
+		panic(fmt.Sprintf("Error getting user data:", err))
+	}
+
 	// if it's the initial user request - i.e. there is no "other user",
 	// log the user into the db and return it as a JSON object
 	if other_user_id == "" {
-		profile_url := fmt.Sprintf("%s/profile/%s", base_uri, user.ID)
+		profile_url := fmt.Sprintf("%sprofile/%s", frontend_url, user.ID)
 		http.Redirect(w,r, profile_url, 301)
 	}else{
 	// otherwise, we have two users to compare, redirect to the compare page
-		compare_url := fmt.Sprintf("%s/compare/%s/%s", base_uri, other_user_id, user.ID)
+		compare_url := fmt.Sprintf("%scompare/%s/%s", frontend_url, other_user_id, user.ID)
 		http.Redirect(w,r, compare_url, 301)
 	}
 }

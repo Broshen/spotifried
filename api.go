@@ -33,28 +33,6 @@ func getAPI(access_token, url string) (*http.Response, error){
 	}
 }
 
-
-func getUser(access_token, refresh_token string) User{
-
-	resp, err := getAPI(access_token, "https://api.spotify.com/v1/me")
-	if err != nil{
-		panic(err)
-	}
-
-	var respVal map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&respVal)
-
-	id := getStringFromJSON(respVal, "id")
-	user := User{
-		ID: id,
-		DisplayName: getStringFromJSON(respVal, "display_name"),
-		AccessToken: access_token,
-		RefreshToken: refresh_token,
-	}
-	db.Save(&user)
-	return user
-}
-
 func getAllUserSongs(access_token, refresh_token string) []Song{
 
 	next := "https://api.spotify.com/v1/me/tracks?offset=0&limit=50"
@@ -194,42 +172,43 @@ func getAllUserArtistsAndGenres(access_token, refresh_token string, songs []Song
 		return artists[i].SongCount > artists[j].SongCount
 	})
 	sort.Slice(genres, func(i, j int) bool{
-		if genres[i].SongCount == genres[j].SongCount{
-			return genres[i].ArtistCount > genres[j].ArtistCount
+		if genres[i].ArtistCount == genres[j].ArtistCount{
+			return genres[i].SongCount > genres[j].SongCount
 		}
-		return genres[i].SongCount > genres[j].SongCount
+		return genres[i].ArtistCount > genres[j].ArtistCount
 	})
 	return artists, genres
 }
 
-func fetchHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	user_id := vars["user_id"]
-	user := getUserById(user_id)
-	defer db.Save(&user)
+func getAllUserData(access_token, refresh_token string) (*User, error) {
+	resp, err := getAPI(access_token, "https://api.spotify.com/v1/me")
+	if err != nil{
+		return nil, err
+	}
+	var respVal map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&respVal)
 
-	redirect_uri := "http://" + r.Host+"/authenticated"
-	user.AccessToken, user.RefreshToken, _ = getTokens(user.RefreshToken, redirect_uri, true)
-	user_songs := getAllUserSongs(user.AccessToken, user.RefreshToken)
-	artists, genres := getAllUserArtistsAndGenres(user.AccessToken, user.RefreshToken, user_songs)
+	user := User{
+		ID: getStringFromJSON(respVal, "id"),
+		DisplayName: getStringFromJSON(respVal, "display_name"),
+		AccessToken: access_token,
+		RefreshToken: refresh_token,
+	}
+
+	user_songs := getAllUserSongs(access_token, refresh_token)
+	artists, genres := getAllUserArtistsAndGenres(access_token, refresh_token, user_songs)
 
 	songsByteArr, err := json.Marshal(user_songs)
 	if err != nil {
-	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 	artistsByteArr, err := json.Marshal(artists)
 	if err != nil {
-	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 	genresByteArr, err := json.Marshal(genres)
 	if err != nil {
-	    w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	user.Songs = string(songsByteArr)
@@ -237,9 +216,35 @@ func fetchHandler(w http.ResponseWriter, r *http.Request) {
 	user.Genres = string(genresByteArr)
 	user.LastRefreshed = string(time.Now().Format("01-02-2006 15:04:05"))
 
+	db.Save(&user)
+	return &user, nil
+}
+
+func fetchHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	user_id := vars["user_id"]
+	user, err := getUserById(user_id)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	defer db.Save(&user)
+
+	redirect_uri := api_url + "/authenticated"
+	user.AccessToken, user.RefreshToken, _ = getTokens(user.RefreshToken, redirect_uri, true)
+	user, err = getAllUserData(user.AccessToken, user.RefreshToken)
+	if err != nil {
+	    w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	response := map[string]interface{}{}
-	response["songs"] = user_songs
-	response["artists"] = artists
-	response["genres"] = genres
+	response["username"] = user.DisplayName
+	response["last_refreshed"] = user.LastRefreshed
+	response["songs"] = user.Songs
+	response["artists"] = user.Artists
+	response["genres"] = user.Genres
 	json.NewEncoder(w).Encode(response)
 }
