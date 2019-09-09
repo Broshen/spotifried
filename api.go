@@ -152,17 +152,24 @@ func getAllUserArtistsAndGenres(access_token, refresh_token string, songs []Song
 	genres := []Genre{}
 
 	for _, artist := range artists{
-		for _, genre := range artist.Genres {
-			if _, ok := genresMap[genre]; ok{
-				genresMap[genre].ArtistCount += 1
-				genresMap[genre].SongCount += artistsSongCount[artist.Id]
-			} else{
-				genresMap[genre] = &Genre{
-					Name: genre,
-					ArtistCount: 1,
-					SongCount: artistsSongCount[artist.Id],
-				}
+
+		genre := getMainGenre(artist.Genres)
+		if _, ok := genresMap[genre]; ok{
+			genresMap[genre].ArtistCount += 1
+			genresMap[genre].SongCount += artistsSongCount[artist.Id]
+
+
+		} else{
+			genresMap[genre] = &Genre{
+				Name: genre,
+				ArtistCount: 1,
+				SongCount: artistsSongCount[artist.Id],
+				SubGenres: NewStringSet(),
 			}
+		}
+
+		for _, subGenre := range artist.Genres {
+			genresMap[genre].SubGenres.Add(subGenre)
 		}
 	}
 	//convert map into a list

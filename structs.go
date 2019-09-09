@@ -43,4 +43,21 @@ type Genre struct {
   Name string
   SongCount int
   ArtistCount int
+  SubGenres StringSet
+}
+
+type StringSet struct {
+  set map[string]bool
+}
+
+func NewStringSet() StringSet {
+  return StringSet{
+    set: map[string]bool{},
+  }
+}
+
+func (s *StringSet) Add(str string){
+  if _, ok := s.set[str]; !ok {
+    s.set[str] = true
+  }
 }
