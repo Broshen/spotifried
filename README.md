@@ -18,6 +18,8 @@ TODO:
 
 - analyze playlists
 
+- analyze albums
+
 - ~~analyze artists~~
 
     - ~~get genres of all artists~~

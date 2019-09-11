@@ -35,3 +35,24 @@
 .list-group-item{
   color: black;
 }
+
+.fixed-list{
+  max-height: 300px;
+  overflow: scroll;
+}
+
+.show-xs-only {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .hidden-xs{
+      display: none;
+  }
+
+  .show-xs-only{
+    display: block;
+  }
+}
+
+

@@ -86,7 +86,8 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		api_url + "authenticated",
 		scopes,
 		other_user_id)
-	http.Redirect(w, r, auth_url, 301)
+
+	http.Redirect(w, r, auth_url, 307)
 }
 
 func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
@@ -109,10 +110,10 @@ func authenticatedHandler(w http.ResponseWriter, r *http.Request) {
 	// log the user into the db and return it as a JSON object
 	if other_user_id == "" {
 		profile_url := fmt.Sprintf("%sprofile/%s", frontend_url, user.ID)
-		http.Redirect(w,r, profile_url, 301)
+		http.Redirect(w,r, profile_url, 307)
 	}else{
 	// otherwise, we have two users to compare, redirect to the compare page
 		compare_url := fmt.Sprintf("%scompare/%s/%s", frontend_url, other_user_id, user.ID)
-		http.Redirect(w,r, compare_url, 301)
+		http.Redirect(w,r, compare_url, 307)
 	}
 }

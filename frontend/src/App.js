@@ -2,6 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Route} from "react-router-dom";
 
 
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+
+
 import Profile from './Profile';
 import Compare from './Compare';
 import Home from './Home';
@@ -9,6 +13,7 @@ import {api_url} from "./variables"
 
 import './App.css';
 
+library.add(fas)
 
 function ShareRedirect ({ match }) {
   window.location.href = api_url + "share/" + match.params.id
