@@ -16,42 +16,6 @@ func getUserById(id string) (*User, error){
 	return &user, nil
 }
 
-func getSongIntersection(user_1_songs, user_2_songs []Song) []Song{
-	intersection := []Song{}
-	user_1_set := map[string]bool{}
-
-	for _, song := range user_1_songs{
-		user_1_set[song.Track.Id] = true
-	}
-
-	for _, song := range user_2_songs{
-		_, ok := user_1_set[song.Track.Id]
-		if ok{
-			intersection = append(intersection, song)
-		}
-	}
-
-	return intersection
-}
-
-func getArtistIntersection(user1_artists, user2_artists []Artist) []Artist{
-	intersection := []Artist{}
-	user1_set := map[string]bool{}
-
-	for _, artist := range user1_artists{
-		user1_set[artist.Id] = true
-	}
-
-	for _, artist := range user2_artists{
-		_, ok := user1_set[artist.Id]
-		if ok{
-			intersection = append(intersection, artist)
-		}
-	}
-
-	return intersection
-}
-
 func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	vars := mux.Vars(r)

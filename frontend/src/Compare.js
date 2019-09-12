@@ -61,7 +61,7 @@ class Compare extends React.Component {
 
 					<Row className="text-center pad-vertical">
 						<Col xs={12} md={6} >
-							<h4> Songs you've both saved: </h4>
+							<h4 className="pad-vertical"> Songs you've both saved: </h4>
 							<TopList
 								elements={
 									this.state.data.songs.map(
@@ -74,10 +74,40 @@ class Compare extends React.Component {
 						</Col>
 
 						<Col xs={12} md={6} >
-							<h4> Artists you both like: </h4>
+							<h4 className="pad-vertical"> Artists you both like: </h4>
 							<TopList
 								elements={
 									this.state.data.artists.map(
+										(x, i) => (
+											<div className="list-group-item text-right" key={i}>
+												{x.Name} - {x.SongCount} common songs
+											</div>)
+								)}
+							/>
+						</Col>
+					</Row>
+
+
+
+					<Row className="text-center pad-vertical">
+						<Col xs={12} md={6} >
+							<h4 className="pad-vertical"> Songs you both listen to a lot: </h4>
+							<TopList
+								elements={
+									this.state.data.top_tracks.map(
+										(x, i) => (
+											<div className="list-group-item text-left" key={i}>
+												{x.Name + " by " + x.Artists.map(e => e.Name).join(", ")}
+											</div>)
+								)}
+							/>
+						</Col>
+
+						<Col xs={12} md={6} >
+							<h4 className="pad-vertical"> Artists you both like a lot: </h4>
+							<TopList
+								elements={
+									this.state.data.top_artists.map(
 										(x, i) => (
 											<div className="list-group-item text-right" key={i}>
 												{x.Name}

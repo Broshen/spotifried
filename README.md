@@ -26,13 +26,21 @@ TODO:
 
 - analyze trends over time
 
-- analyze TOP (not ALL) tracks/artists - /top endpoint
+- ~~analyze TOP (not ALL) tracks/artists - /top endpoint~~
+
+	- ~~common TOP track/artists~~
+
+- add suggestions - get songs by artists common to both users that only one user has saved
 
 - ~~caching - add an intermediate caching layer so that we don't always SPAM spotify with requests~~
 
 - add tests
 
 - search functions
+
+- clean up & parallelize go code
+
+- ~~sort common artists by # of songs in common~~
 
 Deploying:
 1. Build the backend golang binary `go build`
