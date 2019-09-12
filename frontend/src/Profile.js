@@ -91,14 +91,14 @@ class Profile extends React.Component {
 				
 				<Row  className="pad-vertical">
 				<Col xs={12} md={6}>
-				<h3 className="text-center"> Your library, by genres: </h3>
+				<h3 className="text-center pad-vertical"> Your library, by genres: </h3>
 				<PieChart
 				labels={this.state.data.genres.map(d => d.Name)}
 				values={this.state.data.genres.map(d => d.ArtistCount/totalGenres)}
 				/>
 				</Col>
 				<Col xs={12} md={6} className="text-center">
-				<h3> Your top genres: </h3>
+				<h3 className="pad-vertical"> Your top genres: </h3>
 				<HorizontalBarChart
 				labels={this.state.data.genres.map(d => d.Name)}
 				values={this.state.data.genres.map(d => d.ArtistCount)}
@@ -109,14 +109,14 @@ class Profile extends React.Component {
 
 				<Row  className="pad-vertical">
 				<Col xs={12} md={6}>
-				<h3 className="text-center"> Your library, by artists: </h3>
+				<h3 className="text-center pad-vertical"> Your library, by artists: </h3>
 				<PieChart
 				labels={this.state.data.artists.map(d => d.Name)}
 				values={this.state.data.artists.map(d => d.SongCount/totalSongs)}
 				/>
 				</Col>
 				<Col xs={12} md={6} className="text-center">
-				<h3> Your top artists, by number of songs: </h3>
+				<h3 className="pad-vertical"> Your top artists, by number of songs: </h3>
 				<HorizontalBarChart
 				labels={this.state.data.artists.map(d => d.Name)}
 				values={this.state.data.artists.map(d => d.SongCount)}
