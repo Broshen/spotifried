@@ -18,6 +18,8 @@ TODO:
 
 - analyze playlists
 
+- analyze albums
+
 - ~~analyze artists~~
 
     - ~~get genres of all artists~~
@@ -31,3 +33,10 @@ TODO:
 - add tests
 
 - search functions
+
+Deploying:
+1. Build the backend golang binary `go build`
+2. Build the react frontend `cd frontend && npm run build`
+3. Commit the changes
+4. Push to github, and merge to master
+5. Go to heroku, and deploy

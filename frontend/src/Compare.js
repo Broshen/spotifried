@@ -3,8 +3,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
-
-import ExtendibleList, {ArtistListItem, SongListItem} from './ExtendibleList';
+import TopList from './TopList';
 import {api_url} from "./variables"
 
 class Compare extends React.Component {
@@ -63,17 +62,27 @@ class Compare extends React.Component {
 					<Row className="text-center pad-vertical">
 						<Col xs={12} md={6} >
 							<h4> Songs you've both saved: </h4>
-							<ExtendibleList
-								data={this.state.data.songs}
-								child={SongListItem}
+							<TopList
+								elements={
+									this.state.data.songs.map(
+										(x, i) => (
+											<div className="list-group-item text-left" key={i}>
+												{x.Track.Name + " by " + x.Track.Artists.map(e => e.Name).join(", ")}
+											</div>)
+								)}
 							/>
 						</Col>
 
 						<Col xs={12} md={6} >
 							<h4> Artists you both like: </h4>
-							<ExtendibleList
-								data={this.state.data.artists}
-								child={ArtistListItem}
+							<TopList
+								elements={
+									this.state.data.artists.map(
+										(x, i) => (
+											<div className="list-group-item text-right" key={i}>
+												{x.Name}
+											</div>)
+								)}
 							/>
 						</Col>
 					</Row>

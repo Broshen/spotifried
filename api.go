@@ -25,7 +25,7 @@ func getAPI(access_token, url string) (*http.Response, error){
 	if resp.StatusCode != 200{
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
-		return resp, errors.New(fmt.Sprintf("Error while accessing spotify API at %s: %s", url, bodyString))
+		return resp, errors.New(fmt.Sprintf("Error %d while accessing spotify API at %s: %s", resp.StatusCode, url, bodyString))
 	} else if err != nil{
 		return resp, errors.New(fmt.Sprintf("Error while accessing spotify API at %s: %s", url, err))
 	} else{
@@ -33,15 +33,82 @@ func getAPI(access_token, url string) (*http.Response, error){
 	}
 }
 
-func getAllUserSongs(access_token, refresh_token string) []Song{
+func getAllUserSongs(access_token, refresh_token, start string) []Song{
 
-	next := "https://api.spotify.com/v1/me/tracks?offset=0&limit=50"
+	next := start
 	var songs []Song
 
 	for next != "" {
 		resp, err := getAPI(access_token, next) 
 		if resp.StatusCode == 429{ // rate limited
 			fmt.Println("Request to get user songs was rate limited, retry after " + resp.Header["Retry-After"][0] + " seconds")
+			waittime, _ := strconv.Atoi(resp.Header["Retry-After"][0])
+			time.Sleep(time.Duration(waittime) * time.Second)
+			continue
+		} else if err != nil {
+			panic(err)
+		}
+
+		var respVal SongResponse
+		err = json.NewDecoder(resp.Body).Decode(&respVal)
+		if err != nil {
+			panic(fmt.Sprintf("%s", err))
+		}
+
+		if len(respVal.Items) == 0{
+			fmt.Println("redoing ", next, " got empty resp")
+			continue
+		}
+		next = respVal.Next
+		songs = append(songs, respVal.Items...)
+	}
+
+	return songs
+}
+
+func getTopArtists(access_token, refresh_token, start string) []Artist{
+
+	next := start
+	var artists []Artist
+
+	for next != "" {
+		resp, err := getAPI(access_token, next)
+		if resp.StatusCode == 429{ // rate limited
+			fmt.Println("Request to get top user artists was rate limited, retry after " + resp.Header["Retry-After"][0] + " seconds")
+			waittime, _ := strconv.Atoi(resp.Header["Retry-After"][0])
+			time.Sleep(time.Duration(waittime) * time.Second)
+			continue
+		} else if err != nil {
+			panic(err)
+		}
+
+		var respVal TopArtistResponse
+		err = json.NewDecoder(resp.Body).Decode(&respVal)
+		if err != nil {
+			panic(fmt.Sprintf("%s", err))
+		}
+
+		if len(respVal.Items) == 0{
+			fmt.Println("redoing ", next, " got empty resp")
+			continue
+		}
+		next = respVal.Next
+		artists = append(artists, respVal.Items...)
+	}
+
+	return artists
+}
+
+
+func getTopSongs(access_token, refresh_token, start string) []Track{
+
+	next := start
+	var tracks []Track
+
+	for next != "" {
+		resp, err := getAPI(access_token, next) 
+		if resp.StatusCode == 429{ // rate limited
+			fmt.Println("Request to get user top songs was rate limited, retry after " + resp.Header["Retry-After"][0] + " seconds")
 			waittime, _ := strconv.Atoi(resp.Header["Retry-After"][0])
 			time.Sleep(time.Duration(waittime) * time.Second)
 			continue
@@ -60,10 +127,10 @@ func getAllUserSongs(access_token, refresh_token string) []Song{
 			continue
 		}
 		next = respVal.Next
-		songs = append(songs, respVal.Items...)
+		tracks = append(tracks, respVal.Items...)
 	}
 
-	return songs
+	return tracks
 }
 
 func getArtists(access_token, artist_ids string) ([]Artist, error) {
@@ -152,17 +219,24 @@ func getAllUserArtistsAndGenres(access_token, refresh_token string, songs []Song
 	genres := []Genre{}
 
 	for _, artist := range artists{
-		for _, genre := range artist.Genres {
-			if _, ok := genresMap[genre]; ok{
-				genresMap[genre].ArtistCount += 1
-				genresMap[genre].SongCount += artistsSongCount[artist.Id]
-			} else{
-				genresMap[genre] = &Genre{
-					Name: genre,
-					ArtistCount: 1,
-					SongCount: artistsSongCount[artist.Id],
-				}
+
+		genre := getMainGenre(artist.Genres)
+		if _, ok := genresMap[genre]; ok{
+			genresMap[genre].ArtistCount += 1
+			genresMap[genre].SongCount += artistsSongCount[artist.Id]
+
+
+		} else{
+			genresMap[genre] = &Genre{
+				Name: genre,
+				ArtistCount: 1,
+				SongCount: artistsSongCount[artist.Id],
+				SubGenres: NewStringSet(),
 			}
+		}
+
+		for _, subGenre := range artist.Genres {
+			genresMap[genre].SubGenres.Add(subGenre)
 		}
 	}
 	//convert map into a list
@@ -184,6 +258,22 @@ func getAllUserArtistsAndGenres(access_token, refresh_token string, songs []Song
 	return artists, genres
 }
 
+func getAllTopSongs(access_token, refresh_token string) [][]Track {
+	short_term := getTopSongs(access_token, refresh_token, "https://api.spotify.com/v1/me/top/tracks?offset=0&limit=50&time_range=short_term")
+	medium_term := getTopSongs(access_token, refresh_token, "https://api.spotify.com/v1/me/top/tracks?offset=0&limit=50&time_range=medium_term")
+	long_term := getTopSongs(access_token, refresh_token, "https://api.spotify.com/v1/me/top/tracks?offset=0&limit=50&time_range=long_term")
+
+	return [][]Track{short_term, medium_term, long_term}
+}
+
+func getAllTopArtists(access_token, refresh_token string) [][]Artist {
+	short_term := getTopArtists(access_token, refresh_token, "https://api.spotify.com/v1/me/top/artists?offset=0&limit=50&time_range=short_term")
+	medium_term := getTopArtists(access_token, refresh_token, "https://api.spotify.com/v1/me/top/artists?offset=0&limit=50&time_range=medium_term")
+	long_term := getTopArtists(access_token, refresh_token, "https://api.spotify.com/v1/me/top/artists?offset=0&limit=50&time_range=long_term")
+
+	return [][]Artist{short_term, medium_term, long_term}
+}
+
 func getAllUserData(access_token, refresh_token string) (*User, error) {
 	resp, err := getAPI(access_token, "https://api.spotify.com/v1/me")
 	if err != nil{
@@ -199,8 +289,10 @@ func getAllUserData(access_token, refresh_token string) (*User, error) {
 		RefreshToken: refresh_token,
 	}
 
-	user_songs := getAllUserSongs(access_token, refresh_token)
+	user_songs := getAllUserSongs(access_token, refresh_token, "https://api.spotify.com/v1/me/tracks?offset=0&limit=50")
 	artists, genres := getAllUserArtistsAndGenres(access_token, refresh_token, user_songs)
+	top_songs := getAllTopSongs(access_token, refresh_token)
+	top_artists := getAllTopArtists(access_token, refresh_token)
 
 	songsByteArr, err := json.Marshal(user_songs)
 	if err != nil {
@@ -214,10 +306,20 @@ func getAllUserData(access_token, refresh_token string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	topSongsArr, err := json.Marshal(top_songs)
+	if err != nil {
+		return nil, err
+	}
+	topArtistsArr, err := json.Marshal(top_artists)
+	if err != nil {
+		return nil, err
+	}
 
 	user.Songs = string(songsByteArr)
 	user.Artists = string(artistsByteArr)
 	user.Genres = string(genresByteArr)
+	user.TopSongs = string(topSongsArr)
+	user.TopArtists = string(topArtistsArr)
 	user.LastRefreshed = string(time.Now().Format("01-02-2006 15:04:05"))
 
 	db.Save(&user)
