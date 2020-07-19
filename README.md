@@ -42,6 +42,8 @@ TODO:
 
 - ~~sort common artists by # of songs in common~~
 
+- mood analysis - analyze % of library is happy vs sad, fast tempo vs slow, hard vs soft, etc.
+
 Deploying:
 1. Build the backend golang binary `go build`
 2. Build the react frontend `cd frontend && npm run build`
